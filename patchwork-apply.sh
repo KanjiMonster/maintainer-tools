@@ -20,7 +20,7 @@ fetch() {(
 	mkdir "pwclient.get.$$"
 	cd "pwclient.get.$$"
 	pwclient get "$1"
-	mv *.patch "../$1.patch"
+	mv * "../$1.patch"
 	cd ..
 	rmdir "pwclient.get.$$"
 )}
@@ -99,12 +99,12 @@ format_reply() {
 	esac
 
 	case "$remote_host" in
-		git.lede-project.org)
+		git.lede-project.org|git.openwrt.org)
 			case "$remote_repo" in
-				source.git)
+				source.git|openwrt/openwrt.git)
 					echo "Merged into ${remote_ref##*/} with"
 				;;
-				lede/*/staging.git)
+				lede/*/staging.git|openwrt/staging/*.git)
 					echo "Merged into my staging tree with"
 				;;
 				*)
