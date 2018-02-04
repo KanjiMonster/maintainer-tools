@@ -12,7 +12,7 @@ UPDATE=0
 KERNEL=
 PATCHVER=
 
-while [ $# > 0 ]; do
+while [ $# -gt 0 ]; do
 	case $1 in
 		-b|--build)
 			BUILD=1
