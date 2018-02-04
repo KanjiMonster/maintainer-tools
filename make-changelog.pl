@@ -11,7 +11,7 @@ unless (defined $range) {
 	exit 1;
 }
 
-my $commit_url = 'https://git.lede-project.org/?p=source.git;a=commitdiff;h=%s';
+my $commit_url = 'https://git.openwrt.org/?p=openwrt/openwrt.git;a=commitdiff;h=%s';
 
 my @weblinks = (
 	[ qr'^[^:]+://(git.lede-project.org/)(.+)$' => 'https://%s?p=%s;a=commitdiff;h=%%s' ],
@@ -223,6 +223,7 @@ sub requires_subhistory($$$)
 						$url = $1;
 						$url =~ s!\$\(LEDE_GIT\)!https://git.lede-project.org!g;
 						$url =~ s!\$\(OPENWRT_GIT\)!https://git.openwrt.org!g;
+						$url =~ s!\$\(PROJECT_GIT\)!https://git.openwrt.org!g;
 					}
 					elsif ($line =~ m!^-\S+\s*:?=\s*([a-f0-9]{40})\b!)
 					{
@@ -396,7 +397,7 @@ sub fetch_bug_info()
 {
 	unless (-f '/tmp/buginfo.csv')
 	{
-		system('wget', '-O', '/tmp/buginfo.csv', 'https://bugs.lede-project.org/index.php?string=&project=2&do=index&export_list=Export+Tasklist&advancedsearch=on&type%5B%5D=&sev%5B%5D=&pri%5B%5D=&due%5B%5D=&reported%5B%5D=&cat%5B%5D=&status%5B%5D=&percent%5B%5D=&opened=&dev=&closed=&duedatefrom=&duedateto=&changedfrom=&changedto=&openedfrom=&openedto=&closedfrom=&closedto=') && return 0;
+		system('wget', '-O', '/tmp/buginfo.csv', 'https://bugs.openwrt.org/index.php?string=&project=2&do=index&export_list=Export+Tasklist&advancedsearch=on&type%5B%5D=&sev%5B%5D=&pri%5B%5D=&due%5B%5D=&reported%5B%5D=&cat%5B%5D=&status%5B%5D=&percent%5B%5D=&opened=&dev=&closed=&duedatefrom=&duedateto=&changedfrom=&changedto=&openedfrom=&openedto=&closedfrom=&closedto=') && return 0;
 	}
 
 	return 1;
@@ -517,7 +518,7 @@ if (@bugs > 0)
 	{
 		printf "=== #%s ===\n", $bug;
 		printf "**Description:** <nowiki>%s</nowiki>\\\\\n", $bug_info->{$bug}[0];
-		printf "**Link:** [[https://bugs.lede-project.org/index.php?do=details&task_id=%s]]\\\\\n", $bug;
+		printf "**Link:** [[https://bugs.openwrt.org/index.php?do=details&task_id=%s]]\\\\\n", $bug;
 		printf "**Commits:**\\\\\n";
 
 		foreach my $commit (@{$bugs{$bug}})
