@@ -38,7 +38,7 @@ get_subject() {
 		subject="$subject$line"
 	done
 
-	printf "%s\n" "$subject" | sed -e 's/^\[.*\] *//'
+	printf "%s\n" "$subject" | sed -e 's/^\[.*\] \+//'
 }
 
 get_hdr_list() {
@@ -99,26 +99,23 @@ format_reply() {
 	esac
 
 	case "$remote_host" in
-		git.lede-project.org|git.openwrt.org)
+		git.openwrt.org|git.lede-project.org)
 			case "$remote_repo" in
 				source.git|openwrt/openwrt.git)
-					echo "Merged into ${remote_ref##*/} with"
+					echo "Merged into ${remote_ref##*/}."
 				;;
 				lede/*/staging.git|openwrt/staging/*.git)
-					echo "Merged into my staging tree with"
+					echo "Merged into my staging tree."
 				;;
 				*)
-					echo "Merged into ${remote_repo:-the repository}, branch ${remote_ref##*/} with"
+					echo "Merged into ${remote_repo:-the repository}, branch ${remote_ref##*/}."
 				;;
 			esac
 		;;
 		*)
-			echo "Merged with"
+			echo "Merged."
 		;;
 	esac
-
-	echo "http://$remote_host/?p=$remote_repo;a=commitdiff;h=$(git log -1 --format=%h)."
-	echo ""
 
 	echo "Thank you!"
 	echo ""
