@@ -52,8 +52,6 @@ fi
 
 git checkout "$BRANCH"
 
-oldhead="$(git log -1 --format="%H")"
-
 if ! git merge --ff-only "PR$PRID"; then
 	echo ""                                                       >&2
 	echo "Failed to fast-forward merge 'PR$PRID' into '$BRANCH'!" >&2
