@@ -4,7 +4,7 @@ git_author="$(git config user.name)"
 git_email="$(git config user.email)"
 gpg_keyid=""
 
-base_url="http://downloads.lede-project.org/releases"
+base_url="http://downloads.openwrt.org/releases"
 
 [ -f "./feeds.conf.default" ] || {
 	echo "Please execute as ./${0##*/}" >&2
@@ -132,7 +132,7 @@ sed -e 's!\(VERSION_NUMBER:=\$(if .*\),[^,]*)!\1,'"$version"')!g' \
 	include/version.mk > include/version.tagged && \
 		mv include/version.tagged include/version.mk
 
-sed -e 's!http://downloads.lede-project.org/[^"]*!'"$base_url/$version"'!g' \
+sed -e 's!http://downloads.openwrt.org/[^"]*!'"$base_url/$version"'!g' \
     -e '/config VERSION_CODE_FILENAMES/ { :next; n; s!default y!default n!; t end; b next }; :end' \
 	package/base-files/image-config.in > package/base-files/image-config.tagged && \
 		mv package/base-files/image-config.tagged package/base-files/image-config.in
@@ -140,7 +140,7 @@ sed -e 's!http://downloads.lede-project.org/[^"]*!'"$base_url/$version"'!g' \
 echo "$revnum" > version && git add version
 echo "$epoch" > version.date && git add version.date
 
-git commit -sm "LEDE v$version: adjust config defaults" \
+git commit -sm "OpenWrt v$version: adjust config defaults" \
 	feeds.conf.default \
 	include/version.mk \
 	package/base-files/image-config.in \
@@ -160,13 +160,13 @@ fi
 
 git ${gpg_script:+-c "gpg.program=$gpg_script"} tag \
 	-a "v$version" \
-	-m "LEDE v$version Release" \
+	-m "OpenWrt v$version Release" \
 	${gpg_keyid:+-s -u "$gpg_keyid"}
 
 [ -n "$gpg_script" ] && rm -f "$gpg_script"
 
 git revert --no-edit HEAD
-git commit --amend -sm "LEDE v$version: revert to branch defaults"
+git commit --amend -sm "OpenWrt v$version: revert to branch defaults"
 
 git --no-pager show "v$version"
 
