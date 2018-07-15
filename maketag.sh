@@ -86,6 +86,7 @@ revnum="$(./scripts/getver.sh)"
 epoch="$(./scripts/get_source_date_epoch.sh)"
 
 branch="$(git symbolic-ref -q HEAD)"
+distro="OpenWrt"
 
 case "$branch" in
 	*-$basever) : ;;
@@ -95,6 +96,11 @@ case "$branch" in
 
 		exit 1
 	;;
+esac
+
+case "$branch" in
+	lede-*) distro="LEDE" ;;
+	openwrt-*) distro="OpenWrt" ;;
 esac
 
 export GIT_AUTHOR_NAME="$git_author"
@@ -132,7 +138,7 @@ sed -e 's!\(VERSION_NUMBER:=\$(if .*\),[^,]*)!\1,'"$version"')!g' \
 	include/version.mk > include/version.tagged && \
 		mv include/version.tagged include/version.mk
 
-sed -e 's!http://downloads.openwrt.org/[^"]*!'"$base_url/$version"'!g' \
+sed -e 's!http://downloads.\(openwrt\|lede-project\).org/[^"]*!'"$base_url/$version"'!g' \
     -e '/config VERSION_CODE_FILENAMES/ { :next; n; s!default y!default n!; t end; b next }; :end' \
 	package/base-files/image-config.in > package/base-files/image-config.tagged && \
 		mv package/base-files/image-config.tagged package/base-files/image-config.in
@@ -140,7 +146,7 @@ sed -e 's!http://downloads.openwrt.org/[^"]*!'"$base_url/$version"'!g' \
 echo "$revnum" > version && git add version
 echo "$epoch" > version.date && git add version.date
 
-git commit -sm "OpenWrt v$version: adjust config defaults" \
+git commit -sm "$distro v$version: adjust config defaults" \
 	feeds.conf.default \
 	include/version.mk \
 	package/base-files/image-config.in \
@@ -160,13 +166,13 @@ fi
 
 git ${gpg_script:+-c "gpg.program=$gpg_script"} tag \
 	-a "v$version" \
-	-m "OpenWrt v$version Release" \
+	-m "$distro v$version Release" \
 	${gpg_keyid:+-s -u "$gpg_keyid"}
 
 [ -n "$gpg_script" ] && rm -f "$gpg_script"
 
 git revert --no-edit HEAD
-git commit --amend -sm "OpenWrt v$version: revert to branch defaults"
+git commit --amend -sm "$distro v$version: revert to branch defaults"
 
 git --no-pager show "v$version"
 
