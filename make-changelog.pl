@@ -5,13 +5,21 @@ use warnings;
 use Text::CSV;
 
 my $range = $ARGV[0];
+my $workdir = './openwrt-changelog-data';
 
 unless (defined $range) {
 	printf STDERR "Usage: $0 range\n";
 	exit 1;
 }
 
-my $commit_url = 'https://git.openwrt.org/?p=openwrt/openwrt.git;a=commitdiff;h=%s';
+unless (-d $workdir) {
+	unless (system('mkdir', '-p', $workdir) == 0) {
+		printf STDERR "Unable to create work directory!\n";
+		exit 1;
+	}
+}
+
+my $commit_url = 'https://git.openwrt.org/?p=source.git;a=commitdiff;h=%s';
 
 my @weblinks = (
 	[ qr'^[^:]+://(git.lede-project.org/)(.+)$' => 'https://%s?p=%s;a=commitdiff;h=%%s' ],
@@ -19,6 +27,9 @@ my @weblinks = (
 	[ qr'^[^:]+://(github.com/.+?)(?:\.git)?$'  => 'https://%s/commit/%%s' ],
 	[ qr'^[^:]+://git.kernel.org/pub/scm/(.+)$' => 'https://git.kernel.org/cgit/%s/commit/?id=%%s' ],
 	[ qr'^[^:]+://w1.fi/(?:.+/)?(.+)\.git$'     => 'https://w1.fi/cgit/%s/commit/?id=%%s' ],
+	[ qr'^[^:]+://git.netfilter.org/(.+)'       => 'https://git.netfilter.org/%s/commit/?id=%%s' ],
+	[ qr'^[^:]+://git.musl-libc.org/(.+)'       => 'https://git.musl-libc.org/cgit/%s/commit/?id=%%s' ],
+	[ qr'^[^:]+://git.zx2c4.com/(.+)'           => 'https://git.zx2c4.com/%s/commit/?id=%%s' ],
 );
 
 
@@ -189,17 +200,17 @@ sub fetch_subhistory($$$)
 
 	(my $path = $url) =~ s![^a-z0-9_-]+!-!g;
 
-	unless (-d "/tmp/repos/$path")
+	unless (-d "$workdir/repos/$path")
 	{
-		mkdir('/tmp/repos');
-		system('git', 'clone', '--quiet', $url, "/tmp/repos/$path");
+		mkdir("$workdir/repos");
+		system('git', 'clone', '--quiet', $url, "$workdir/repos/$path");
 	}
 	else
 	{
-		system('git', "--work-tree=/tmp/repos/$path", "--git-dir=/tmp/repos/$path/.git", 'pull', '--quiet');
+		system('git', "--work-tree=$workdir/repos/$path", "--git-dir=$workdir/repos/$path/.git", 'pull', '--quiet');
 	}
 
-	return parse_history("/tmp/repos/$path", "$old..$new");
+	return parse_history("$workdir/repos/$path", "$old..$new");
 }
 
 sub requires_subhistory($$$)
@@ -356,10 +367,10 @@ sub format_change($)
 
 sub fetch_cve_info()
 {
-	unless (-f '/tmp/cveinfo.csv')
+	unless (-f "$workdir/cveinfo.csv")
 	{
-		system('wget', '-O', '/tmp/cveinfo.csv.gz', 'https://cve.mitre.org/data/downloads/allitems.csv.gz') && return 0;
-		system('gunzip', '-f', '/tmp/cveinfo.csv.gz') && return 0;
+		system('wget', '-O', "$workdir/cveinfo.csv.gz", 'https://cve.mitre.org/data/downloads/allitems.csv.gz') && return 0;
+		system('gunzip', '-f', "$workdir/cveinfo.csv.gz") && return 0;
 	}
 
 	return 1;
@@ -372,7 +383,7 @@ sub parse_cves(@)
 
 	if (fetch_cve_info() && $csv)
 	{
-		if (open CVE, '<', '/tmp/cveinfo.csv')
+		if (open CVE, '<', "$workdir/cveinfo.csv")
 		{
 			while (defined(my $row = $csv->getline(*CVE)))
 			{
@@ -395,9 +406,9 @@ sub parse_cves(@)
 
 sub fetch_bug_info()
 {
-	unless (-f '/tmp/buginfo.csv')
+	unless (-f "$workdir/buginfo.csv")
 	{
-		system('wget', '-O', '/tmp/buginfo.csv', 'https://bugs.openwrt.org/index.php?string=&project=2&do=index&export_list=Export+Tasklist&advancedsearch=on&type%5B%5D=&sev%5B%5D=&pri%5B%5D=&due%5B%5D=&reported%5B%5D=&cat%5B%5D=&status%5B%5D=&percent%5B%5D=&opened=&dev=&closed=&duedatefrom=&duedateto=&changedfrom=&changedto=&openedfrom=&openedto=&closedfrom=&closedto=') && return 0;
+		system('wget', '-O', "$workdir/buginfo.csv", 'https://bugs.openwrt.org/index.php?string=&project=2&do=index&export_list=Export+Tasklist&advancedsearch=on&type%5B%5D=&sev%5B%5D=&pri%5B%5D=&due%5B%5D=&reported%5B%5D=&cat%5B%5D=&status%5B%5D=&percent%5B%5D=&opened=&dev=&closed=&duedatefrom=&duedateto=&changedfrom=&changedto=&openedfrom=&openedto=&closedfrom=&closedto=') && return 0;
 	}
 
 	return 1;
@@ -405,12 +416,12 @@ sub fetch_bug_info()
 
 sub parse_bugs(@)
 {
-	my $csv = Text::CSV->new({ binary => 1, allow_loose_quotes => 1, eol => "\012" });
+	my $csv = Text::CSV->new({ binary => 1, allow_loose_quotes => 1 });
 	my %bugs;
 
 	if (fetch_bug_info() && $csv)
 	{
-		if (open BUG, '<', '/tmp/buginfo.csv')
+		if (open BUG, '<', "$workdir/buginfo.csv")
 		{
 			while (defined(my $row = $csv->getline(*BUG)))
 			{
@@ -458,10 +469,10 @@ foreach my $commit (@commits)
 
 	my (%bug_ids, %cve_ids);
 
-	foreach my $bug ($commit->[2] =~ m!([A-Z]*#\d+)\b!g,
-	                 $commit->[3] =~ m!([A-Z]*#\d+)\b!g)
+	foreach my $bug ($commit->[2] =~ m!\b((?:[Pp]ull [Rr]equest |[Bb]ug |[Ii]ssue |PR |FS |GH |PR|FS|GH)#\d+)\b!g,
+	                 $commit->[3] =~ m!\b((?:[Pp]ull [Rr]equest |[Bb]ug |[Ii]ssue |PR |FS |GH |PR|FS|GH)#\d+)\b!g)
 	{
-		if ($bug =~ m!^(?:FS|GH|)#(\d+)$!)
+		if ($bug =~ m!^(?:Bug |Issue |FS |GH |FS|GH)#(\d+)$!i)
 		{
 			$bug_ids{$1}++;
 		}
