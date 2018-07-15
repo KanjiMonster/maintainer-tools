@@ -99,8 +99,8 @@ case "$branch" in
 esac
 
 case "$branch" in
-	lede-*) distro="LEDE" ;;
-	openwrt-*) distro="OpenWrt" ;;
+	*/lede-*) distro="LEDE" ;;
+	*/openwrt-*) distro="OpenWrt" ;;
 esac
 
 export GIT_AUTHOR_NAME="$git_author"
