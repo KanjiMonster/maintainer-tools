@@ -19,7 +19,7 @@ unless (-d $workdir) {
 	}
 }
 
-my $commit_url = 'https://git.openwrt.org/?p=source.git;a=commitdiff;h=%s';
+my $commit_url = 'https://git.openwrt.org/?p=openwrt/openwrt.git;a=commitdiff;h=%s';
 
 my @weblinks = (
 	[ qr'^[^:]+://(git.lede-project.org/)(.+)$' => 'https://%s?p=%s;a=commitdiff;h=%%s' ],
