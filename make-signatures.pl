@@ -8,7 +8,7 @@ use POSIX qw(mktime strftime setlocale LC_COLLATE);
 
 setlocale(LC_COLLATE, "en_US.UTF-8");
 
-my $page = 'https://lede-project.org/docs/user-guide/signatures';
+my $page = 'https://openwrt.org/docs/guide-user/security/signatures';
 
 my @keytypes = (
 	undef,
@@ -99,8 +99,8 @@ sub format_download {
 	my $ts = strftime '%F %T %z', gmtime $mtime;
 
 	return sprintf
-		"[[https://git.lede-project.org/?p=keyring.git;a=history;f=%s|Last change: %s]] | " .
-		"[[https://git.lede-project.org/?p=keyring.git;a=blob_plain;f=%s|Download]]\n"	,
+		"[[https://git.openwrt.org/?p=keyring.git;a=history;f=%s|Last change: %s]] | " .
+		"[[https://git.openwrt.org/?p=keyring.git;a=blob_plain;f=%s|Download]]\n"	,
 		$key->{filename}, $ts, $key->{filename};
 }
 
@@ -166,7 +166,9 @@ if (open KEYS, '-|', qw(find gpg/ -type f -name *.asc -print)) {
 
 			$data{filename} = $file;
 			$data{is_system_key} =
+				(index($data{email}, 'openwrt.org') >= 0) ||
 				(index($data{email}, 'lede-project.org') >= 0) ||
+				(index($data{email}, 'lists.openwrt.org') >= 0) ||
 				(index($data{email}, 'lists.infradead.org') >= 0);
 
 			push @pubkeys, \%data;
