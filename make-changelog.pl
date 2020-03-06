@@ -627,10 +627,10 @@ sub _fetch($) {
 
 	if (-d $self->directory) {
 		Log::info("Updating repository %s ...", $self->url);
-		
+
 		my $tree = $self->directory;
 		my $git  = $tree . '/.git';
-		
+
 		if (system('git', "--work-tree=$tree", "--git-dir=$git", 'fetch', '--all', '--quiet')) {
 			return Log::err("Unable to pull repository!");
 		}
@@ -931,12 +931,15 @@ sub bugs($) {
 
 	my $bugtracker = BugTracker->new;
 	my $candidates = qr'\b((?:[Pp]ull [Rr]equest |[Bb]ug |[Ii]ssue |PR |FS |GH |PR|FS|GH)#\d+)\b';
-	my $issue = qr'(?i)^(?:Bug |Issue |FS |GH |FS|GH)#(\d+)$';
+	my $issue = qr'(?i)^(Bug |Issue |FS |GH |FS|GH)#(\d+)$';
 	my %bugs;
 
 	foreach my $match ($self->subject =~ /$candidates/g, $self->body =~ /$candidates/g) {
 		if ($match =~ $issue) {
-			my $bug = $bugtracker->get($1);
+			my ($type, $id) = ($1, $2);
+			next if $type =~ m!^GH!;
+
+			my $bug = $bugtracker->get($id);
 			if ($bug) {
 				$bugs{ $bug->id } = $bug;
 			}
